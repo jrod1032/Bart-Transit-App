@@ -1,17 +1,42 @@
 import React from 'react';
-import axios from 'axios'
+import axios from 'axios';
+
+import Station from './Station.jsx'
 
 class Lines extends React.Component {
   constructor(props) {
     super(props)
     this.state = {
-      lines: ['red', 'blue', 'green']
+      lines: ['red', 'blue', 'green'],
+      selected: 'red',
+      stationsOnLine: [{name: 'Line Not Selected'}]
     }
   }
 
   componentDidMount() {
-    axios.get('localhost:3000/api/lines')
-      .then( (lines) => this.setState({lines: lines}))
+    axios.get('/api/lines')
+    .then( (lines) => {
+      this.setState({lines: lines.data})
+      })
+    .catch( (err) => console.log(err.message))
+  }
+
+  handleStopSelect(e) {
+    let selectedIndex = e.target.selectedIndex;
+    this.setState({
+      selected: e.target[selectedIndex].value
+    })
+    this.getStationsOnLine(e.target[selectedIndex].id)
+  }
+
+  getStationsOnLine(lineId) {
+    console.log('lineId: ', lineId)
+    axios.get(`/api/lines/${lineId}`)
+    .then( (stationsOnLine) => {
+      console.log('Stations: ', stationsOnLine)
+      this.setState({stationsOnLine: stationsOnLine.data})
+    })
+    .catch( (err) => console.log(err.message))
   }
 
   render() {
@@ -19,23 +44,20 @@ class Lines extends React.Component {
       <div className="lines-view">
         <div className="selections">
           Choose a line:
-          <select>
-          {this.state.lines.map( line => {
-            return <option>{line}</option>
-          })}
+          <select onChange={this.handleStopSelect.bind(this)}>
+            {this.state.lines.map( line => {
+              return <option id={line.id}>{line.name}</option>
+            })}
           </select>
         </div>
         <div className="lines-stop-list">
           <ul>
-            <li>Hardcoded Stop 1</li>
-            <li>Hardcoded Stop 2</li>
-            <li>Hardcoded Stop 3</li>
-            <li>Hardcoded Stop 4</li>
-            <li>Hardcoded Stop 5</li>
-            <li>Hardcoded Stop 6</li>
-            <li>Hardcoded Stop 7</li>
-            <li>Hardcoded Stop 8</li>
-            <li>Hardcoded Stop 9</li>
+            {this.state.stationsOnLine.map( station =>  {
+             return <Station
+             id={station.id}
+             name={station.name}
+             isFavorite={station.is_favorite} />
+            })}
           </ul>
         </div>
       </div>

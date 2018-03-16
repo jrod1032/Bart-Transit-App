@@ -1,8 +1,46 @@
 import React from 'react'
+import axios from 'axios'
 
 class TripPlanner extends React.Component {
   constructor(props) {
     super(props)
+    this.state = {
+      stations: [{name: 'Line Not Selected'}],
+      start: null,
+      end: null
+    }
+  }
+
+  componentDidMount() {
+    axios.get('/api/stations')
+    .then( (stations) => {
+      console.log('stations: ', stations.data)
+      this.setState({stations: stations.data})
+    })
+    .catch( (err) => console.log(err.message))
+  }
+
+  handleGoClick() {
+    axios.get(`/api/getDirections`, {params: {start:this.state.start, end:this.state.end}})
+    .then( directions => {
+      console.log('Directions:', directions)
+    })
+    .catch( err => console.log(err.message))
+  }
+
+  handleStopSelect(e) {
+    let selectedIndex = e.target.selectedIndex
+    let id = e.target.id
+    console.log(e.target[selectedIndex])
+    if (id === 'start') {
+      this.setState({
+        start: e.target[selectedIndex].id
+      })
+    } else {
+      this.setState({
+        end: e.target[selectedIndex].id
+      })
+    }
   }
 
   render() {
@@ -10,30 +48,25 @@ class TripPlanner extends React.Component {
       <div className="trip-planner-view">
         <div className="selections">
           Start: 
-          <select>
-            <option>Hardcoded Station Name A</option>
-            <option>Hardcoded Station Name B</option>
-            <option>Hardcoded Station Name C</option>
-            <option>Hardcoded Station Name D</option>
-            <option>Hardcoded Station Name E</option>
-            <option>Hardcoded Station Name F</option>
+          <select id="start" onChange={this.handleStopSelect.bind(this)}>
+            {this.state.stations.map( (station) => {
+              return <option id={station.id}>{station.name}</option>
+            })}
+            }
           </select>
 
           <br />
 
           End: 
-          <select>
-            <option>Hardcoded Station Name A</option>
-            <option>Hardcoded Station Name B</option>
-            <option>Hardcoded Station Name C</option>
-            <option>Hardcoded Station Name D</option>
-            <option>Hardcoded Station Name E</option>
-            <option>Hardcoded Station Name F</option>
+          <select id="end" onChange={this.handleStopSelect.bind(this)}>
+            {this.state.stations.map( (station) => {
+              return <option id={station.id}>{station.name}</option>
+            })}
           </select>
 
           <br />
 
-          <button>Go!</button>
+          <button onClick={this.handleGoClick.bind(this)}>Go!</button>
         </div>
 
         <div className="directions">
