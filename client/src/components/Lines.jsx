@@ -16,8 +16,12 @@ class Lines extends React.Component {
   componentDidMount() {
     axios.get('/api/lines')
     .then( (lines) => {
-      this.setState({lines: lines.data})
+      this.setState({
+        lines: lines.data,
+        selected: lines.data[0].id,
       })
+      this.getStationsOnLine(lines.data[0].id)
+    })
     .catch( (err) => console.log(err.message))
   }
 
