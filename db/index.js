@@ -56,25 +56,6 @@ const updateFavorite = function(lineId, callback) {
   })
 }
 
-const gatherStopsOnLine = function(linesForStartpoint, linesForEndpoint, callback) {
-  //if matching lines no transfer needed, so just go from start to finish
-  console.log('linesStart: ', linesForStartpoint);
-  console.log('linesEnd: ', linesForEndpoint);
-  const matchingLines = findMatchingLines(linesForStartpoint, linesForEndpoint) 
-  console.log('match?', matchingLines)
-  if (matchingLines) {
-    //we have an array of matching lines
-    // for each line, get all stop
-    for (let i = 0; i < matchingLines.length; i++) {
-      getAllStopsOnLine(matchingLines[i], (err, stations) => {
-
-      })
-    }
-  } else {
-    //harder algorithm
-  }
-}
-
 const findMatchingLines = function(linesA, linesB) {
   const matchingLines = [];
   for (let i = 0; i < linesA.length; i++) {
@@ -89,26 +70,38 @@ const findMatchingLines = function(linesA, linesB) {
   return matchingLines;
 }
 
-const getLineThatStopBelongsTo = function(stationId, callback) {
-  const sqlQuery = `SELECT service_lines.id, service_lines.name FROM service_lines, stations INNER JOIN stops ON stops.station_id = stations.id  WHERE stops.line_id = service_lines.id AND stations.id = ${stationId}`
-  client.query(sqlQuery, (err, lines) => {
+const getCommonLines = function(stationId1, stationId2, callback) {
+  const sqlQuery = `SELECT * FROM 
+  (SELECT stops.line_id, service_lines.name FROM stops, service_lines WHERE stops.station_id = ${stationId1} AND service_lines.id = stops.line_id
+  INTERSECT 
+  SELECT stops.line_id, service_lines.name FROM stops, service_lines WHERE stops.station_id = ${stationId2} AND service_lines.id = stops.line_id) 
+  AS commonlines`
+  client.query(sqlQuery, (err, data) => {
     if (err) {
       callback(err, null)
     } else {
-      callback(null, lines.rows)
+      callback(null, data.rows)
     }
   })
 }
 
 const getDirections = function(endpoints, callback) {
-  getLineThatStopBelongsTo(endpoints.start, (err1, linesForStartpoint) => {
-    getLineThatStopBelongsTo(endpoints.end, (err2, linesForEndpoint) => {
-      if(err2) {console.log(err.message)}
-      gatherStopsOnLine(linesForStartpoint, linesForEndpoint, (stations) => {
-        
-      })
-    })
+  getCommonLines(endpoints.start, endpoints.end, (err, commonLines) => {
+    if (err) {console.log(err.message)}
+      console.log('common lines, ', commonLines)
+      if (commonLines.length > 0) {
+        getAllStopsOnLine(commonLines[0].line_id, (err, data) => {
+          if (err) {
+            callback(err, null)
+          } else {
+            callback(null, data.rows)
+          }
+        }) 
+      } else {
+        //find transfer points, go from there
+      }
   })
+
 }
 
 module.exports.getAllLines = getAllLines;
