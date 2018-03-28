@@ -16,6 +16,7 @@ app.get('/api/lines', (req, res) => {
     if (err){
       res.status(500).json({error: 'server error'})
     } else {
+      console.log('headers', res.headers)
       res.status(200).json(lines.rows);  
     }
   })
