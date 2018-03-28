@@ -8,7 +8,6 @@ class TripPlanner extends React.Component {
       stations: [{name: 'Line Not Selected'}],
       start: [{name: 'Ashby'}],
       end: [{name: 'Ashby'}],
-      directions: [{name: 'Ashby'}],
       changeTrains: false,
       secondLine: false,
       showDirections: false
@@ -31,15 +30,17 @@ class TripPlanner extends React.Component {
   handleGoClick() {
     axios.get(`/api/getDirections`, {params: {start:this.state.start, end:this.state.end}})
     .then( directions => {
-      console.log('Directions:', directions.data)
       this.getStationsFromStartToFinish(directions.data, parseInt(this.state.start), parseInt(this.state.end))
     })
     .catch( err => console.log(err.message))
   }
 
-  getStationsFromStartToFinish(stations, start, finish) {
+  getStationsFromStartToFinish(data, start, finish) {
     let startIndex = 0;
-    let endIndex = 0
+    let endIndex = 0;
+    let stations = data.directions;
+    const serviceLine = data.line;
+    const colorHex = data.color; 
     for (let i = 0; i < stations.length; i++) {
       if (stations[i].id === start) {
         startIndex = i;
@@ -48,14 +49,25 @@ class TripPlanner extends React.Component {
       }
     }
 
-    const stationList = stations.slice(startIndex, endIndex + 1)
-    console.log('stationList', stationList);
+    let stationList = stations.slice(startIndex, endIndex + 1);
+    if (stationList.length === 0) {stationList = stations.slice(endIndex, startIndex + 1)}
+    const { color, direction} = this.parseServiceLine(serviceLine);
     this.setState({
-      directions: stationList,
+      stationList: stationList,
       startName: stationList[0].name,
       endName: stationList[stationList.length - 1].name,
-      showDirections: true
+      showDirections: true,
+      color: color,
+      colorHex: colorHex,
+      direction: direction
     })
+  }
+
+  parseServiceLine(line) {
+    let words = line.split(':');
+    let color = words[0];
+    let direction = words[1]
+    return {color, direction}
   }
 
   handleStopSelect(e) {
@@ -108,12 +120,12 @@ class TripPlanner extends React.Component {
 
           <div className="directions-step">
             <div className="directions-line-header">
-              <div className="line-circle" style={{backgroundColor: "#ed1d24"}}></div>
-              <p className="line-name">Red Line</p>
-              <p className="line-direction">towards Station C</p>
+              <div className="line-circle" style={{backgroundColor: "#" + this.state.colorHex}}></div>
+              <p className="line-name">{this.state.color}</p>
+              <p className="line-direction">{this.state.direction}</p>
             </div>
             <ul>
-            {this.state.directions.map(station => {
+            {this.state.stationList.map(station => {
              return <li>{station.name}</li>
             })}
             </ul>
