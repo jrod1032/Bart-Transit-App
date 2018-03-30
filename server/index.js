@@ -11,48 +11,57 @@ app.use(bodyParser.urlencoded({extended: true}));
 
 app.use(express.static(__dirname + '/../client/dist'));
 
-app.get('/api/lines', (req, res) => {
-  db.getAllLines( (err, lines) => {
-    if (err){
-      res.status(500).json({error: 'server error'})
-    } else {
-      console.log('headers', res.headers)
-      res.status(200).json(lines.rows);  
-    }
-  })
+app.get('/api/lines', async (req, res) => {
+  try {
+    const allLines = await db.getAllLines();
+    res.status(200).json(allLines)
+  }
+  catch (e){
+    res.status(500).json({error: e})
+  }
 })
 
-app.get('/api/lines/:lineId', (req, res) => {
+app.get('/api/lines/:lineId', async (req, res) => {
   const lineId = req.params.lineId;
-  db.getAllStopsOnLine(lineId, (err, stations) => {
-    if (err) {
-      res.status(500).json({error: 'server error'})
-    } else {
-      res.status(200).json(stations.rows)
-    }
-  })
+
+  try {
+    let stations = await db.getAllStopsOnLine(lineId)
+    res.status(200).json(stations)
+  } catch(e) {
+    res.status(500).json({error: e})
+  }
 })
 
-app.get('/api/stations/', (req, res) => {
-  db.getAllStations( (err, stations) => {
-    if (err) {
-      res.status(500).json({error: 'server error'})
-    } else {
-      res.status(200).json(stations.rows)
-    }
-  })
+app.get('/api/stations/', async (req, res) => {
+  try {
+    const allStations = await db.getAllStations();
+    res.status(200).json(allStations)
+  }
+  catch(e) {
+    console.log(e)
+  }
+  
 })
 
-app.get('/api/getDirections', (req, res) => {
+app.get('/api/getDirections', async (req, res) => {
   const endpoints = req.query;
   console.log('endpoints: ', endpoints);
-  db.getDirections(endpoints, (err, directions) => {
-    if (err) {
-      res.status(500).json({error: 'server error'})
-    } else {
-      res.status(200).json(directions)
-    }
-  })
+  try {
+     let {lineName, lineColor, stations} = await db.getDirections(endpoints);
+     console.log('lineName: ',lineName)
+     console.log('color: ', lineColor)
+     console.log('stations: ',stations)
+     res.status(200).json({lineName, lineColor, stations})
+  } catch(e){
+    console.log(e)
+  }
+  // let stations = await db.getDirections(endpoints, (err, directions, serviceLine, color) => {
+  //   if (err) {
+  //     res.status(500).json({error: 'server error'})
+  //   } else {
+  //     res.status(200).json({directions: directions, line: serviceLine, color: color})
+  //   }
+  // })
 })
 
 app.patch('/api/lines/:lineId', (req, res) => {
