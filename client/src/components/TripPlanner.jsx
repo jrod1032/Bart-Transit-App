@@ -17,7 +17,6 @@ class TripPlanner extends React.Component {
   componentDidMount() {
     axios.get('/api/stations')
     .then( (stations) => {
-      console.log('stations: ', stations.data)
       this.setState({
         stations: stations.data,
         start: stations.data[0],
@@ -30,37 +29,20 @@ class TripPlanner extends React.Component {
   handleGoClick() {
     axios.get(`/api/getDirections`, {params: {start:this.state.start, end:this.state.end}})
     .then( directions => {
-      this.getStationsFromStartToFinish(directions.data, parseInt(this.state.start), parseInt(this.state.end))
+      console.log('directions', directions)
+      const { color, direction} = this.parseServiceLine(directions.data.lineName);
+      const stationList = directions.data.stations;
+      this.setState({
+        stationList: stationList,
+        startName: stationList[0].name,
+        endName: stationList[stationList.length - 1].name,
+        showDirections: true,
+        color: color,
+        colorHex: directions.data.lineColor,
+        direction: direction
+      })
     })
     .catch( err => console.log(err.message))
-  }
-
-  getStationsFromStartToFinish(data, start, finish) {
-    let startIndex = 0;
-    let endIndex = 0;
-    let stations = data.directions;
-    const serviceLine = data.line;
-    const colorHex = data.color; 
-    for (let i = 0; i < stations.length; i++) {
-      if (stations[i].id === start) {
-        startIndex = i;
-      } else if (stations[i].id === finish) {
-        endIndex = i;
-      }
-    }
-
-    let stationList = stations.slice(startIndex, endIndex + 1);
-    if (stationList.length === 0) {stationList = stations.slice(endIndex, startIndex + 1)}
-    const { color, direction} = this.parseServiceLine(serviceLine);
-    this.setState({
-      stationList: stationList,
-      startName: stationList[0].name,
-      endName: stationList[stationList.length - 1].name,
-      showDirections: true,
-      color: color,
-      colorHex: colorHex,
-      direction: direction
-    })
   }
 
   parseServiceLine(line) {
