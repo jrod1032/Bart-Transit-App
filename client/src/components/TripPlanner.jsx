@@ -13,7 +13,8 @@ class TripPlanner extends React.Component {
       changeTrains: false,
       secondLine: false,
       showDirections: false,
-      etd: '10'
+      etd: '0',
+      parseServiceLine: this.parseServiceLine.bind(this)
     }
   }
 
@@ -33,27 +34,44 @@ class TripPlanner extends React.Component {
     axios.get(`/api/getDirections`, {params: {start:this.state.start, end:this.state.end}})
     .then( directions => {
       console.log('directions', directions)
-      const { color, direction} = this.parseServiceLine(directions.data.lineName);
-      const stationList = directions.data.stations;
+      // const { color, direction} = this.parseServiceLine(directions.data.lineName);
+      // const stationList = directions.data;
+      // this.setState({
+      //   stationList: stationList,
+      //   startName: stationList[0].name,
+      //   endName: stationList[stationList.length - 1].name,
+      //   showDirections: true,
+      //   color: color,
+      //   colorHex: directions.data.lineColor,
+      //   direction: direction
+      // })
+      let startStations = directions.data[0].stations
+      let startName = startStations[0].name
+      let endStations = directions.data[directions.data.length - 1].stations;
+      let endName = endStations[endStations.length -1].name
       this.setState({
-        stationList: stationList,
-        startName: stationList[0].name,
-        endName: stationList[stationList.length - 1].name,
+        directions: directions.data,
         showDirections: true,
-        color: color,
-        colorHex: directions.data.lineColor,
-        direction: direction
+        startName: startName,
+        endName: endName
+
       })
+      let lineNameAndDirection = directions.data[0].lineName
+      this.parseServiceLine(lineNameAndDirection)
       this.getDepartureTime()
     })
     .catch( err => console.log(err.message))
   }
 
   parseServiceLine(line) {
+    console.log('inside line', line)
     let words = line.split(':');
     let color = words[0];
     let direction = words[1]
-    return {color, direction}
+    this.setState({
+      colorName: color,
+      toward: direction
+    })
   }
 
   getDepartureTime() {
@@ -67,9 +85,18 @@ class TripPlanner extends React.Component {
     }
     axios.get('http://api.bart.gov/api/etd.aspx', {params: params} )
       .then( data => {
-        console.log('Data from Bart: ', data.data.root)
+        let etd = 0;
+        let lines = data.data.root.station[0].etd
+        for (let i = 0; i < lines.length; i++) {
+          let line = lines[i];
+          let direction = this.state.toward.substring(9,14)
+          let apiDirection = line.destination.substring(0,5) === 'SF Ai' ? 'Millb' : line.destination.substring(0,5)
+          if (apiDirection === direction) {
+            etd = line.estimate[0].minutes;
+          }
+        }
         this.setState({
-          etd: data.data.root.station[0].etd[0].estimate[0].minutes
+          etd: etd
         })
 
       })
@@ -92,30 +119,37 @@ class TripPlanner extends React.Component {
   }
 
   render() {
-    const changeTrains = this.state.changeTrains ?  <div className="directions-step">
+    const changeTrains = this.state.directions && this.state.directions.length > 1 ?  <div className="directions-step">
             <div className="directions-line-header">
               <p className="line-name">Change Trains</p>
             </div>
           </div> : null
+    let allDirections = [];
 
-    const secondLine = this.state.secondLine ?  <div className="directions-step">
+    const secondLine = this.state.directions && this.state.directions.length > 0 ? 
+        this.state.directions.forEach( (direction, index) => {
+          let lineNameAndDirection = direction.lineName.split(':')
+          allDirections.push( <div className="directions-step">
             <div className="directions-line-header">
-              <div className="line-circle" style={{backgroundColor: "#0099cc"}}></div>
-              <p className="line-name">Blue Line</p>
-              <p className="line-direction">towards Station F</p>
+              <div className="line-circle" style={{backgroundColor: "#" + direction.lineColor}}></div>
+              <p className="line-name">{lineNameAndDirection[0]}</p>
+              <p className="line-direction">{lineNameAndDirection[1]}</p>
             </div>
             <ul>
-              {this.state.secondLine.map( (station) => {
+              {direction.stations.map( (station) => {
                 return <li>{station.name}</li>
               })}
             </ul>
-          </div> : null
+          </div> )
+          this.state.directions.length - 1 !== index ? allDirections.push(changeTrains) : null
+        })
+        : null 
 
-    const directions = this.state.showDirections ? 
+    const directions = this.state.directions && this.state.showDirections ? 
         <div className="directions">
           <div className="directions-summary">
             <p className="line-name">{this.state.startName} to {this.state.endName}</p>
-            <p>{this.state.etd} minutes. (arrive at ???)</p>
+            <p>{this.state.etd} minutes</p>
           </div>
 
           <div className="directions-step">
@@ -123,21 +157,7 @@ class TripPlanner extends React.Component {
               <p className="line-name">Start at {this.state.startName}</p>
             </div>
           </div>
-
-          <div className="directions-step">
-            <div className="directions-line-header">
-              <div className="line-circle" style={{backgroundColor: "#" + this.state.colorHex}}></div>
-              <p className="line-name">{this.state.color}</p>
-              <p className="line-direction">{this.state.direction}</p>
-            </div>
-            <ul>
-            {this.state.stationList.map(station => {
-             return <li>{station.name}</li>
-            })}
-            </ul>
-          </div>
-          {changeTrains}
-          {secondLine}
+          {allDirections}
           <div className="directions-step">
             <div className="directions-line-header">
               <p className="line-name">Arrive at {this.state.endName}</p>
