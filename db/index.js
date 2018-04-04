@@ -1,9 +1,8 @@
 const { Client } = require('pg');
 const pgp = require('pg-promise')();
 const pgConfig = require('./config.js');
-//const client = new Client(pgConfig)
+const helpers = require('./helpers.js')
 const client = pgp(pgConfig);
-//client.connect()
 
 const getAllLines = async function() {
   try {
@@ -17,7 +16,7 @@ const getAllLines = async function() {
 
 
 const getAllStopsOnLine = async function(lineId) {
-  const sqlQuery = `SELECT stations.name, stations.id, stations.is_favorite 
+  const sqlQuery = `SELECT stations.name, stations.id, stations.is_favorite, stops.is_transfer
   FROM stations, service_lines 
   INNER JOIN stops 
   ON stops.line_id = service_lines.id 
@@ -57,7 +56,11 @@ const updateFavorite = function(lineId, callback) {
 }
 
 const getLinesThatStopBelongsTo = async function(stationId, callback) {
-  const sqlQuery = `SELECT stops.line_id, service_lines.name, service_lines.color FROM stops, service_lines WHERE stops.station_id = ${stationId} AND service_lines.id = stops.line_id`
+  const sqlQuery = `SELECT stops.line_id, service_lines.name, service_lines.color 
+  FROM stops, service_lines 
+  WHERE stops.station_id = ${stationId} 
+  AND service_lines.id = stops.line_id
+  ORDER BY service_lines.id desc`
   try {
     const lines = await client.any(sqlQuery, [true]);
     return lines
@@ -69,46 +72,62 @@ const getLinesThatStopBelongsTo = async function(stationId, callback) {
 }
 
 
-const getDirections = async function(endpoints, callback) {
-  const start = parseInt(endpoints.start);
-  const end = parseInt(endpoints.end);
-  const lines = await getLinesThatStopBelongsTo(start);
-  console.log('lines!', lines)
-  for (let i = 0; i < lines.length; i++) {
-    let lineId = lines[i].line_id;
-    let lineName = lines[i].name;
-    let lineColor = lines[i].color;
-    let allStationsOnLine = await getAllStopsOnLine(lineId);
+const getDirections = async function(endpoints) {
+  let combinedDirections = [];
 
-    let stations = findStationsinCorrectDirection(start, end, allStationsOnLine)
-    if (stations.length > 0) {
-      return {lineName, lineColor, stations}
+  const generateDirections = async function(endpoints) {
+    const start = parseInt(endpoints.start);
+    const end = parseInt(endpoints.end);
+    const lines = await getLinesThatStopBelongsTo(start);
+    const lines2 = await getLinesThatStopBelongsTo(end);
+    const commonLines = helpers.getCommonLines(lines,lines2);
+
+    if (commonLines.length > 0) {
+      for (let i = 0; i < commonLines.length; i++) {
+        let lineId = commonLines[i].line_id;
+        let lineName = commonLines[i].name;
+        let lineColor = commonLines[i].color;
+        let allStationsOnLine = await getAllStopsOnLine(lineId);
+        let stations = helpers.getStationsUntilEndPoint(start, end, allStationsOnLine)
+        if (stations.length > 0) {
+          let dir = {};
+          dir.lineName = lineName;
+          dir.lineColor = lineColor;
+          dir.stations = stations;
+          combinedDirections.push(dir) 
+          break;
+        } 
+      }
+
+    } else {
+    //no common lines, need transfer
+        for (let i = 0; i < lines.length; i++) {
+          let lineId1 = lines[i].line_id;
+          let lineName1 = lines[i].name;
+          let lineColor1 = lines[i].color;
+          let lineId2 = lines2[i].line_id;
+          let allStationsOnLine1 = await getAllStopsOnLine(lineId1);
+          let allStationsOnLine2 = await getAllStopsOnLine(lineId2);  
+        //get stations up until transfer point;
+          let stations1 = helpers.getStationsUntilTransferPoint(allStationsOnLine1, start);  
+          if (stations1.length > 0) {
+            let directions = {lineName: lineName1, lineColor: lineColor1, stations: stations1}
+            combinedDirections.push(directions)
+
+            let transferStation = stations1[stations1.length - 1]
+            let newEndpoints = {start: transferStation.id, end: end }
+            let generate = await generateDirections(newEndpoints)
+            break;
+          }  
+        }
     }
+
   }
+
+  let generate = await generateDirections(endpoints)
+  return combinedDirections;
 }
 
-const findStationsinCorrectDirection = function(start, end, stations) {
-  let startIndex = -1;
-  let endIndex = -1;
-  for (let i = 0; i < stations.length; i++) {
-    let station = stations[i]
-    if (station.id === start) {
-      startIndex = i
-    } else if (stations[i].id === end) {
-      endIndex = i
-    }
-    if (startIndex > -1 && endIndex > -1) {
-      break;
-    }
-  }
-  if (endIndex > 0 && startIndex <= endIndex) {
-    return stations.slice(startIndex, endIndex + 1);
-  } else if (endIndex > 0 && startIndex > endIndex){
-    return stations.slice(startIndex, endIndex + 1).reverse();
-  } else {
-    return [];
-  }
-}
 
 module.exports.getAllLines = getAllLines;
 module.exports.getAllStopsOnLine = getAllStopsOnLine;

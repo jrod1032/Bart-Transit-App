@@ -45,13 +45,13 @@ app.get('/api/stations/', async (req, res) => {
 
 app.get('/api/getDirections', async (req, res) => {
   const endpoints = req.query;
-  console.log('endpoints: ', endpoints);
+  // console.log('endpoints: ', endpoints);
   try {
-     let {lineName, lineColor, stations} = await db.getDirections(endpoints);
-     console.log('lineName: ',lineName)
-     console.log('color: ', lineColor)
-     console.log('stations: ',stations)
-     res.status(200).json({lineName, lineColor, stations})
+     let combinedDirections = await db.getDirections(endpoints);
+     // console.log('lineName: ',lineName)
+     // console.log('color: ', lineColor)
+     // console.log('stations: ',stations)
+     res.status(200).json(combinedDirections)
   } catch(e){
     console.log(e)
   }
