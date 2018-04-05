@@ -45,34 +45,26 @@ app.get('/api/stations/', async (req, res) => {
 
 app.get('/api/getDirections', async (req, res) => {
   const endpoints = req.query;
-  // console.log('endpoints: ', endpoints);
   try {
      let combinedDirections = await db.getDirections(endpoints);
-     // console.log('lineName: ',lineName)
-     // console.log('color: ', lineColor)
-     // console.log('stations: ',stations)
+
      res.status(200).json(combinedDirections)
   } catch(e){
     console.log(e)
   }
-  // let stations = await db.getDirections(endpoints, (err, directions, serviceLine, color) => {
-  //   if (err) {
-  //     res.status(500).json({error: 'server error'})
-  //   } else {
-  //     res.status(200).json({directions: directions, line: serviceLine, color: color})
-  //   }
-  // })
+
 })
 
-app.patch('/api/lines/:lineId', (req, res) => {
+app.patch('/api/lines/:lineId', async (req, res) => {
   const lineId = req.params.lineId;
-  db.updateFavorite(lineId, (err, confirmation) => {
-    if (err) {
-      res.status(500).json({error: 'server error'})
-    } else {
-      res.status(201).json({confirmation: 'updated!'})
-    }
-  })
+  try {
+    const confirmation = await db.updateFavorite(lineId)
+    res.status(201).json(confirmation);
+  }
+  catch(e) {
+    res.status(500).json(e)
+  }
+
 })
 
 app.listen(PORT, () => {
