@@ -23,8 +23,8 @@ class TripPlanner extends React.Component {
     .then( (stations) => {
       this.setState({
         stations: stations.data,
-        start: stations.data[0],
-        end: stations.data[0]
+        start: stations.data[0].id,
+        end: stations.data[0].id
       })
     })
     .catch( (err) => console.log(err.message))
@@ -34,17 +34,6 @@ class TripPlanner extends React.Component {
     axios.get(`/api/getDirections`, {params: {start:this.state.start, end:this.state.end}})
     .then( directions => {
       console.log('directions', directions)
-      // const { color, direction} = this.parseServiceLine(directions.data.lineName);
-      // const stationList = directions.data;
-      // this.setState({
-      //   stationList: stationList,
-      //   startName: stationList[0].name,
-      //   endName: stationList[stationList.length - 1].name,
-      //   showDirections: true,
-      //   color: color,
-      //   colorHex: directions.data.lineColor,
-      //   direction: direction
-      // })
       let startStations = directions.data[0].stations
       let startName = startStations[0].name
       let endStations = directions.data[directions.data.length - 1].stations;
@@ -64,7 +53,6 @@ class TripPlanner extends React.Component {
   }
 
   parseServiceLine(line) {
-    console.log('inside line', line)
     let words = line.split(':');
     let color = words[0];
     let direction = words[1]
