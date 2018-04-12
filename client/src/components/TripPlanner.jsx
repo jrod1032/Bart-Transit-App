@@ -2,6 +2,7 @@ import React from 'react'
 import axios from 'axios'
 import API_KEY from '../../../bartConfig.js'
 import stationAbbr from '../data/stationAbbreviations.js'
+import Clock from './clock.jsx'
 
 class TripPlanner extends React.Component {
   constructor(props) {
@@ -47,7 +48,6 @@ class TripPlanner extends React.Component {
       })
       let lineNameAndDirection = directions.data[0].lineName
       this.parseServiceLine(lineNameAndDirection)
-      this.getDepartureTime()
     })
     .catch( err => console.log(err.message))
   }
@@ -60,35 +60,6 @@ class TripPlanner extends React.Component {
       colorName: color,
       toward: direction
     })
-  }
-
-  getDepartureTime() {
-    let station = stationAbbr[this.state.startName];
-    console.log('stationAbbr', station)
-    let params = {
-      cmd: 'etd',
-      orig: station,
-      key: API_KEY,
-      json: 'y'
-    }
-    axios.get('http://api.bart.gov/api/etd.aspx', {params: params} )
-      .then( data => {
-        let etd = 0;
-        let lines = data.data.root.station[0].etd
-        for (let i = 0; i < lines.length; i++) {
-          let line = lines[i];
-          let direction = this.state.toward.substring(9,14)
-          let apiDirection = line.destination.substring(0,5) === 'SF Ai' ? 'Millb' : line.destination.substring(0,5)
-          if (apiDirection === direction) {
-            etd = line.estimate[0].minutes;
-          }
-        }
-        this.setState({
-          etd: etd
-        })
-
-      })
-      .catch(err => console.log('Error from bart: ', err.message))  
   }
 
   handleStopSelect(e) {
@@ -137,7 +108,7 @@ class TripPlanner extends React.Component {
         <div className="directions">
           <div className="directions-summary">
             <p className="line-name">{this.state.startName} to {this.state.endName}</p>
-            <p>{this.state.etd} minutes</p>
+            <Clock station={this.state.startName} toward={this.state.toward}/>
           </div>
 
           <div className="directions-step">
