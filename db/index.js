@@ -46,10 +46,11 @@ const getAllStations = async function() {
   }
 }
 
-const updateFavorite = function(lineId, callback) {
+const updateFavorite = async function(lineId, callback) {
   const sqlQuery = `UPDATE stations SET is_favorite = NOT is_favorite WHERE stations.id = ${lineId}`
   try {
-    let confirmation = client.none(sqlQuery)
+    let confirmation = await client.none(sqlQuery)
+    return confirmation;
   } catch(e) {
     console.log('error on update', e)
   }
