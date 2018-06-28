@@ -16,9 +16,6 @@ class Clock extends React.Component {
 
   componentDidMount() {
     this.timerId = setInterval( () => this.tick(), 1000)
-  }
-  componentWillReceiveProps(nextProps) {
-    //let component do own http request
     const station = stationAbbr[this.props.station]
     const params = {
       cmd: 'etd', 
@@ -29,13 +26,11 @@ class Clock extends React.Component {
     axios.get('http://api.bart.gov/api/etd.aspx', {params: params})
     .then(data => {
     //setIntervalX
-    console.log('from bart: ', data)
       let etd = 5;
       let lines = data.data.root.station[0].etd
       for (let i = 0; i < lines.length; i++) {
         let line = lines[i];
         let direction = this.props.toward.substring(9,14)
-        console.log('direction:', direction)
         let apiDirection = line.destination.substring(0,5) === 'SF Ai' ? 'Millb' : line.destination.substring(0,5)
         if (apiDirection === direction) {
           etd = line.estimate[0].minutes;
@@ -44,11 +39,12 @@ class Clock extends React.Component {
       this.setState({
         departureTime: parseInt(etd) * 60 * 1000 + new Date().getTime()
       })
-
-      // this.tick();
     })
-    .catch(err => console.log('clock error from bart', err.message))
+    .catch(err => console.log('clock error from bart', err.message))    
   }
+  // componentWillReceiveProps(nextProps) {
+
+  // }
 
   componentWillUnmount() {
     //stop timer
@@ -58,9 +54,7 @@ class Clock extends React.Component {
   tick() {
     let now = new Date().getTime()
     let distance = this.state.departureTime - now;
-    console.log('distance', distance)
     let min = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-    console.log('min', min)
     let seconds = Math.floor((distance % (1000 * 60)) / 1000);
     let currentCountDown = `${min}m ${seconds}s`
     this.setState({
@@ -70,9 +64,10 @@ class Clock extends React.Component {
   }
 
   render() {
+    const clock = this.state.departureTime ? <p>{this.state.distance > 1000 ? `Departing in ${this.state.countdown}`: 'Leaving'}</p> : null
     return (
       <div>
-        <p>{this.state.distance > 1000 ? `Departing in ${this.state.countdown}`: 'Leaving'}</p> 
+        <p>{clock}</p> 
       </div>
     )
   }

@@ -4,6 +4,8 @@ import $ from 'jquery'
 
 import Lines from './components/Lines.jsx';
 import TripPlanner from './components/TripPlanner.jsx';
+import TripSelector from './components/TripSelector.jsx';
+import Directions from './components/Directions.jsx';
 
 class App extends React.Component {
   constructor(props) {
@@ -46,7 +48,27 @@ class App extends React.Component {
           <div className="main-view">
             {this.state.view === 'lines'
               ? <Lines />
-              : <TripPlanner />
+              : <TripPlanner> 
+                {(stationsInfo, directionsInfo) => directionsInfo === null
+                  ? <TripSelector 
+                  handleStopSelect={stationsInfo.handleStopSelect}
+                  handleGoClick={stationsInfo.handleGoClick}
+                  stations={stationsInfo.stations} />
+                  : <div>
+                      <TripSelector 
+                        handleStopSelect={stationsInfo.handleStopSelect}
+                        handleGoClick={stationsInfo.handleGoClick}
+                        stations={stationsInfo.stations} 
+                      />
+                      <Directions 
+                      startName={directionsInfo.startName}
+                      endName={directionsInfo.endName}
+                      toward={directionsInfo.toward}
+                      directions={directionsInfo.directions}
+                      />
+                  </div>
+                }
+              </TripPlanner>
             }
           </div> 
         </div>  
