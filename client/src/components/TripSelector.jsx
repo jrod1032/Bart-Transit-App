@@ -5,8 +5,8 @@ const TripSelector = (props) => {
     <div className="selections">
       Start: 
       <select id="start" onChange={props.handleStopSelect}>
-        {props.stations.map( (station) => {
-          return <option id={station.id}>{station.name}</option>
+        {props.stations.map( (station, index) => {
+          return <option key={index} id={station.id}>{station.name}</option>
         })}
         }
       </select>
@@ -15,8 +15,8 @@ const TripSelector = (props) => {
 
       End: 
       <select id="end" onChange={props.handleStopSelect}>
-        {props.stations.map( (station) => {
-          return <option id={station.id}>{station.name}</option>
+        {props.stations.map( (station, index) => {
+          return <option key={index} id={station.id}>{station.name}</option>
         })}
       </select>
 

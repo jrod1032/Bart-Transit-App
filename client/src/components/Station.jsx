@@ -11,7 +11,6 @@ class Station extends React.Component {
 
   toggleFavorite(e) {
     let stationId = e.target.id;
-    console.log('beforeIsfavorute: ', this.state.isFavorite)
     axios.patch(`api/lines/${stationId}`)
     .then( (confirmation) => {
       console.log('confirm:',confirmation);
@@ -27,7 +26,7 @@ class Station extends React.Component {
       <li 
       onClick={this.toggleFavorite.bind(this)}
       id={this.props.id}
-      class={this.state.isFavorite ? 'green' : 'black'}>{this.props.name}</li>
+      className={this.state.isFavorite ? 'green' : 'black'}>{this.props.name}</li>
       )
   }
 }

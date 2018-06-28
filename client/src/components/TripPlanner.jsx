@@ -84,7 +84,7 @@ class TripPlanner extends React.Component {
       ? null
       : <DirectionsScreen loadingIcon={this.state.loadingIcon}>
           {(icon) => icon
-            ? <div>Loading!!!!</div>
+            ? <div className="loader"></div>
             : <Directions 
             startName={this.state.startName}
             endName={this.state.endName}

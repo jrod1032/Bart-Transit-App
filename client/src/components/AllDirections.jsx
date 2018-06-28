@@ -9,7 +9,7 @@ const ListOfDirections = (props) => {
       ? null
       : <StationHeader headLine={'Change Station'} />
     return (
-      <div>
+      <div key={index}>
         <Direction 
         lineNameAndDirection={lineNameAndDirection}
         lineColor={direction.lineColor} 

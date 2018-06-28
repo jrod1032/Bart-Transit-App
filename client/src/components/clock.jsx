@@ -8,7 +8,6 @@ class Clock extends React.Component {
     super(props)
     this.state = {
       stationAbbr: this.props.station,
-      key: API_KEY,
       countdown: 50000,
       etd: 50000,
     }
@@ -42,9 +41,6 @@ class Clock extends React.Component {
     })
     .catch(err => console.log('clock error from bart', err.message))    
   }
-  // componentWillReceiveProps(nextProps) {
-
-  // }
 
   componentWillUnmount() {
     //stop timer
@@ -64,10 +60,12 @@ class Clock extends React.Component {
   }
 
   render() {
-    const clock = this.state.departureTime ? <p>{this.state.distance > 1000 ? `Departing in ${this.state.countdown}`: 'Leaving'}</p> : null
+    const clock = this.state.departureTime && this.state.distance 
+    ? <p>{this.state.distance > 10000 ? `Departing in ${this.state.countdown}`: 'Leaving now!'}</p> 
+    : <div className="loaderSmall"></div>
     return (
       <div>
-        <p>{clock}</p> 
+        {clock}
       </div>
     )
   }

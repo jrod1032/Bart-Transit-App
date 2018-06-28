@@ -34,10 +34,8 @@ class Lines extends React.Component {
   }
 
   getStationsOnLine(lineId) {
-    console.log('lineId: ', lineId)
     axios.get(`/api/lines/${lineId}`)
     .then( (stationsOnLine) => {
-      console.log('Stations: ', stationsOnLine)
       this.setState({stationsOnLine: stationsOnLine.data})
     })
     .catch( (err) => console.log(err.message))
@@ -49,15 +47,16 @@ class Lines extends React.Component {
         <div className="selections">
           Choose a line:
           <select onChange={this.handleStopSelect.bind(this)}>
-            {this.state.lines.map( line => {
-              return <option id={line.id}>{line.name}</option>
+            {this.state.lines.map( (line, index) => {
+              return <option key={index} id={line.id}>{line.name}</option>
             })}
           </select>
         </div>
         <div className="lines-stop-list">
           <ul>
-            {this.state.stationsOnLine.map( station =>  {
+            {this.state.stationsOnLine.map( (station, index) =>  {
              return <Station
+             key={index}
              id={station.id}
              name={station.name}
              isFavorite={station.is_favorite} />

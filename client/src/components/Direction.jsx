@@ -9,8 +9,8 @@ const Direction = (props) => {
         <p className="line-direction">{props.lineNameAndDirection[1]}</p>
       </div>
       <ul>
-        {props.stations.map( (station) => {
-          return <li>{station.name}</li>
+        {props.stations.map( (station, index) => {
+          return <li key={index}>{station.name}</li>
         })}
       </ul>
     </div>
