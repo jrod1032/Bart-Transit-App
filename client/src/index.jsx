@@ -48,27 +48,7 @@ class App extends React.Component {
           <div className="main-view">
             {this.state.view === 'lines'
               ? <Lines />
-              : <TripPlanner> 
-                {(stationsInfo, directionsInfo) => directionsInfo === null
-                  ? <TripSelector 
-                  handleStopSelect={stationsInfo.handleStopSelect}
-                  handleGoClick={stationsInfo.handleGoClick}
-                  stations={stationsInfo.stations} />
-                  : <div>
-                      <TripSelector 
-                        handleStopSelect={stationsInfo.handleStopSelect}
-                        handleGoClick={stationsInfo.handleGoClick}
-                        stations={stationsInfo.stations} 
-                      />
-                      <Directions 
-                      startName={directionsInfo.startName}
-                      endName={directionsInfo.endName}
-                      toward={directionsInfo.toward}
-                      directions={directionsInfo.directions}
-                      />
-                  </div>
-                }
-              </TripPlanner>
+              : <TripPlanner /> 
             }
           </div> 
         </div>  
